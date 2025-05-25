@@ -1,0 +1,21 @@
+---
+// src/components/Card.astro
+export interface Props {
+  title: string;
+  value: string;
+  subtitle?: string;
+}
+const { title, value, subtitle } = Astro.props;
+---
+<div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-6 flex justify-between items-center transition-colors">
+  <div>
+    <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">{title}</p>
+    <p class="mt-1 text-3xl font-semibold text-neutral-900 dark:text-neutral-100">{value}</p>
+    {subtitle && (
+      <p class="mt-2 text-sm text-neutral-400 dark:text-neutral-500">{subtitle}</p>
+    )}
+  </div>
+  <div class="text-neutral-300 dark:text-neutral-500">
+    <slot name="icon" />
+  </div>
+</div>

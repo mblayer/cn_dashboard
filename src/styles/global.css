@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+/* Declara aquí tus custom properties */
+:root {
+    --border: #e5e7eb;
+    --background: #ffffff;
+    --foreground: #111827;
+    --muted: #f9fafb;
+    --muted-foreground: #6b7280;
+}
+@custom-variant dark (&:where(.dark, .dark *));
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

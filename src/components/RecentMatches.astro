@@ -1,0 +1,71 @@
+---
+// src/components/RecentMatches.astro
+import { LoaderCircle } from "@lucide/astro";
+
+export interface Player {
+  name: string;
+}
+export interface Match {
+  _id: string;
+  game_number: number;
+  map: string;
+  team1: Player[];
+  team2: Player[];
+  winner: 1 | 2;
+  finishedAt: string;
+  status: string;
+}
+
+export interface Props {
+  matches: Match[];
+  title?: string;
+}
+
+const { matches, title = "Últimas 2 Partidas Jugadas" } = Astro.props;
+const recent = [...matches].reverse().slice(0, 2);
+---
+<div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-6 transition-colors">
+  {title && (
+    <h2 class="text-xl font-semibold mb-4 text-neutral-900 dark:text-neutral-100 m-0">{title}</h2>
+  )}
+  <ul class="space-y-6">
+    {recent.map((m) => (
+      <li key={m._id}>
+        <div class="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
+          {m.status === "ongoing" && (
+            <div class="flex items-center">
+              <span>{m.map} - {m.status}</span>
+              <span class="inline-block align-middle ml-2 animate-spin text-neutral-500 dark:text-neutral-400">
+                <LoaderCircle size={20} />
+              </span>
+            </div>
+          )}
+        </div>
+        <div class="flex flex-col sm:flex-row sm:space-x-4">
+          <div
+            class={`flex-1 p-4 rounded border transition-colors 
+              ${m.winner === 1 ? 'bg-green-100 dark:bg-green-900 border-green-300 dark:border-green-700' : 'bg-transparent dark:bg-transparent border-neutral-200 dark:border-neutral-600'}`}
+          >
+            <p class="font-semibold mb-1 text-neutral-900 dark:text-neutral-100">Equipo 1</p>
+            <ul class="list-disc list-inside text-sm space-y-1 text-neutral-700 dark:text-neutral-300">
+              {m.team1.map((p) => (
+                <li key={p.name}>{p.name}</li>
+              ))}
+            </ul>
+          </div>
+          <div
+            class={`flex-1 p-4 rounded border transition-colors 
+              ${m.winner === 2 ? 'bg-green-100 dark:bg-green-900 border-green-300 dark:border-green-700' : 'bg-transparent dark:bg-transparent border-neutral-200 dark:border-neutral-600'}`}
+          >
+            <p class="font-semibold mb-1 text-neutral-900 dark:text-neutral-100">Equipo 2</p>
+            <ul class="list-disc list-inside text-sm space-y-1 text-neutral-700 dark:text-neutral-300">
+              {m.team2.map((p) => (
+                <li key={p.name}>{p.name}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </li>
+    ))}
+  </ul>
+</div>

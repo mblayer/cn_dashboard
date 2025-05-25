@@ -1,0 +1,37 @@
+---
+// src/components/FeaturedPlayers.astro
+export interface Props {
+  players: Array<{ name: string; wins: number; played: number; }>;
+  title?: string;
+  subtitle?: string;
+}
+const { players, title = 'Jugadores Destacados', subtitle = '' } = Astro.props;
+---
+<div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-6 transition-colors">
+  {title && (
+    <h2 class="text-xl font-semibold mb-2 text-neutral-900 dark:text-neutral-100">{title}</h2>
+  )}
+  {subtitle && (
+    <p class="text-neutral-500 dark:text-neutral-400 mb-4">{subtitle}</p>
+  )}
+  <ul class="space-y-4">
+    {players.map((p, i) => {
+      const winRate = p.played > 0 ? Math.round((p.wins / p.played) * 100) : 0;
+      let bgClass = 'bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200';
+      if (i === 0) bgClass = 'bg-yellow-500 text-white';
+      else if (i === 1) bgClass = 'bg-neutral-300 dark:bg-neutral-600 text-neutral-800 dark:text-neutral-200';
+      else if (i === 2) bgClass = 'bg-amber-700 text-white';
+      return (
+        <li class="flex items-center space-x-4">
+          <span class={`${bgClass} flex items-center justify-center w-8 h-8 rounded-full font-bold`}>{i + 1}</span>
+          <div>
+            <p class="font-semibold text-neutral-900 dark:text-neutral-100">{p.name}</p>
+            <p class="text-sm text-neutral-500 dark:text-neutral-400">
+              {winRate}% de winRate - {p.wins} victorias en {p.played} partidas
+            </p>
+          </div>
+        </li>
+      );
+    })}
+  </ul>
+</div>

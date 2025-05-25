@@ -1,0 +1,45 @@
+---
+// src/components/Header.astro
+---
+
+<header
+  class="flex items-center justify-between p-4 bg-white dark:bg-neutral-800 shadow transition-colors"
+>
+  <h1 class="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
+    Cartoon Network
+    <span class="text-base text-neutral-700 dark:text-neutral-300">Team Games</span>
+  </h1>
+  <button
+    id="theme-toggle"
+    aria-label="Toggle dark mode"
+    class="p-2 rounded-full bg-neutral-200 dark:bg-neutral-700 focus:outline-none transition-colors cursor-pointer"
+  >
+    <span id="theme-icon" class="text-neutral-800 dark:text-yellow-300">🌙</span>
+  </button>
+
+  <script is:inline>
+    (() => {
+      const root = document.documentElement;
+      const toggle = document.getElementById("theme-toggle");
+      const icon = document.getElementById("theme-icon");
+      const DARK_CLASS = "dark";
+      const LS_KEY = "theme";
+
+      // Inicializar tema según localStorage o preferencia del sistema
+      const stored = localStorage.getItem(LS_KEY);
+      const useDark =
+        stored === "dark" ||
+        (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      if (useDark) {
+        root.classList.add(DARK_CLASS);
+        icon.textContent = "☀️";
+      }
+
+      toggle.addEventListener("click", () => {
+        const isDark = root.classList.toggle(DARK_CLASS);
+        localStorage.setItem(LS_KEY, isDark ? "dark" : "light");
+        icon.textContent = isDark ? "☀️" : "🌙";
+      });
+    })();
+  </script>
+</header>

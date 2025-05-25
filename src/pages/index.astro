@@ -1,11 +1,182 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import Layout from "../layouts/Layout.astro";
+import Card from "../components/CounterDashboard.astro";
+import MapBarChart from "../components/MapBarChart.jsx";
+import { List, MapPin, Users, Trophy } from "@lucide/astro";
+import CivBarChart from "../components/CivBarChart.jsx";
+import FeaturedPlayers from "../components/FeaturedPlayers.astro";
+import RecentMatches from "../components/RecentMatches.astro";
+import TeamVersus from "../components/Versus.astro";
+export const prerender = false;
+const API_URL = "https://apibot.server211.ovh/matches";
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+let matches = [];
+try {
+  const res = await fetch(API_URL);
+  matches = res.ok ? await res.json() : [];
+} catch (err) {
+  console.error("Error conectando con la API:", err);
+}
+
+// --- CÁLCULO DE KPIs ---
+// Total de partidas
+const totalMatches = matches.length;
+
+// Mapa más jugado
+const mapCounts = matches.reduce((acc, m) => {
+  acc[m.map] = (acc[m.map] || 0) + 1;
+  return acc;
+}, {});
+let mostPlayedMap = "";
+let mostPlayedCount = 0;
+for (const [map, cnt] of Object.entries(mapCounts)) {
+  if (cnt > mostPlayedCount) {
+    mostPlayedMap = map;
+    mostPlayedCount = cnt;
+  }
+}
+
+// Jugadores únicos
+const uniquePlayers = new Set();
+matches.forEach((m) => {
+  m.team1.forEach((p) => uniquePlayers.add(p.name));
+  m.team2.forEach((p) => uniquePlayers.add(p.name));
+});
+const uniquePlayersCount = uniquePlayers.size;
+
+// Jugador que más ganó
+const winsByPlayer = {};
+matches.forEach((m) => {
+  const winners = m.winner === 1 ? m.team1 : m.team2;
+  winners.forEach((p) => {
+    winsByPlayer[p.name] = (winsByPlayer[p.name] || 0) + 1;
+  });
+});
+let topWinner = "";
+let topWins = 0;
+for (const [name, cnt] of Object.entries(winsByPlayer)) {
+  if (cnt > topWins) {
+    topWinner = name;
+    topWins = cnt;
+  }
+}
+const civCounts = {};
+matches.forEach((m) => {
+  Object.values(m.team1_civs).forEach((c) => {
+    civCounts[c.main] = (civCounts[c.main] || 0) + 1;
+  });
+  Object.values(m.team2_civs).forEach((c) => {
+    civCounts[c.main] = (civCounts[c.main] || 0) + 1;
+  });
+});
+const civArray = Object.entries(civCounts).map(([civ, count]) => ({
+  civ,
+  count,
+}));
+const topCivs = civArray.sort((a, b) => b.count - a.count).slice(0, 5);
+
+// --- DATOS PARA EL GRÁFICO ---
+const chartData = Object.entries(mapCounts).map(([map, count]) => ({
+  map,
+  count,
+}));
+
+// --- Cálculo jugadores destacados ---
+const playerStats = {};
+matches.forEach((m) => {
+  m.team1.forEach((p) => {
+    if (!playerStats[p.name]) playerStats[p.name] = { wins: 0, played: 0 };
+    playerStats[p.name].played++;
+    if (m.winner === 1) playerStats[p.name].wins++;
+  });
+  m.team2.forEach((p) => {
+    if (!playerStats[p.name]) playerStats[p.name] = { wins: 0, played: 0 };
+    playerStats[p.name].played++;
+    if (m.winner === 2) playerStats[p.name].wins++;
+  });
+});
+const topPlayers = Object.entries(playerStats)
+  .map(([name, stats]) => ({ name, ...stats }))
+  .sort((a, b) => b.wins - a.wins)
+  .slice(0, 5);
 ---
 
 <Layout>
-	<Welcome />
+  <div
+    class="p-6 space-y-8 bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors"
+  >
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <Card title="Total Partidas" value={totalMatches.toString()} subtitle="">
+        <List
+          slot="icon"
+          class="w-6 h-6 text-neutral-700 dark:text-neutral-300"
+        />
+      </Card>
+
+      <Card
+        title="Mapa más jugado"
+        value={mostPlayedMap}
+        subtitle={`${mostPlayedCount} partidas`}
+      >
+        <MapPin
+          slot="icon"
+          class="w-6 h-6 text-neutral-700 dark:text-neutral-300"
+        />
+      </Card>
+
+      <Card title="Jugadores Activos" value={uniquePlayersCount.toString()}>
+        <Users
+          slot="icon"
+          class="w-6 h-6 text-neutral-700 dark:text-neutral-300"
+        />
+      </Card>
+
+      <Card
+        title="Jugador que más ganó"
+        value={topWinner}
+        subtitle={`${topWins} victorias`}
+      >
+        <Trophy
+          slot="icon"
+          class="w-6 h-6 text-neutral-700 dark:text-neutral-300"
+        />
+      </Card>
+    </div>
+
+    <!-- Gráficos en Grid -->
+    <div
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-y-6 gap-x-6 justify-items-center"
+    >
+      <div class="w-full">
+        <MapBarChart
+          client:load
+          data={chartData}
+          title="Partidas por Mapa"
+          subtitle="Distribución de partidas jugadas por mapa"
+        />
+      </div>
+      <div class="w-full">
+        <CivBarChart
+          client:load
+          data={topCivs}
+          title="Civilizaciones Más Usadas"
+          subtitle="Top 5 civilizaciones más utilizadas en partidas"
+        />
+      </div>
+    </div>
+
+    <!-- Featured & Recent center -->
+    <div
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-y-6 gap-x-6 justify-items-center"
+    >
+      <div class="w-full">
+        <FeaturedPlayers players={topPlayers} />
+      </div>
+      <div class="w-full">
+        <!-- <RecentMatches matches={matches} /> -->
+
+        <TeamVersus match={matches.reverse()[0]} title="Ultima Partida" />
+      </div>
+    </div>
+  </div>
 </Layout>
