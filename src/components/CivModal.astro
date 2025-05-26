@@ -1,0 +1,331 @@
+---
+interface CivRating {
+  [key: string]: number;
+}
+
+interface MapData {
+  _id: string;
+  civ_rating: CivRating;
+  name: string;
+  chance: number;
+  type: string;
+}
+
+interface Props {
+  mapData: MapData;
+  modalId: string;
+  className?: string;
+}
+
+const { mapData, modalId, className = '' } = Astro.props;
+
+// Ordenar civilizaciones por rating
+const allCivsSorted = Object.entries(mapData.civ_rating)
+  .sort(([,a], [,b]) => b - a);
+
+const totalCivs = Object.keys(mapData.civ_rating).length;
+const avgRating = Math.round(
+  Object.values(mapData.civ_rating).reduce((sum, rating) => sum + rating, 0) / totalCivs
+);
+
+// Obtener color para el rating
+const getRatingColor = (rating: number) => {
+  if (rating >= 95) return 'text-green-600 dark:text-green-400';
+  if (rating >= 90) return 'text-blue-600 dark:text-blue-400';
+  if (rating >= 85) return 'text-yellow-600 dark:text-yellow-400';
+  return 'text-red-600 dark:text-red-400';
+};
+
+// Obtener color para la barra de progreso
+const getProgressColor = (rating: number) => {
+  if (rating >= 95) return 'bg-green-500';
+  if (rating >= 90) return 'bg-blue-500';
+  if (rating >= 85) return 'bg-yellow-500';
+  return 'bg-red-500';
+};
+---
+
+<!-- Modal con todas las civilizaciones -->
+<dialog id={modalId} class:list={[
+  " z-50 flex items-center justify-center bg-black/50 backdrop-blur-md h-screen w-screen",
+  className
+]}>
+  <div class="relative bg-white dark:bg-neutral-800 rounded-xl shadow-2xl w-11/12 max-w-4xl border border-neutral-200 dark:border-neutral-700">
+    <!-- Header del modal -->
+    <div class="flex items-center justify-between mb-6 pb-4 border-b border-neutral-200 dark:border-neutral-600 p-6">
+      <div>
+        <h3 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100">
+          {mapData.name} - Todas las Civilizaciones
+        </h3>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+          {totalCivs} civilizaciones • Rating promedio: {avgRating}
+        </p>
+      </div>
+      <button 
+        class="w-8 h-8 rounded-full p-0 inline-flex items-center justify-center bg-transparent hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
+        onclick={`document.getElementById('${modalId}').close()`}
+      >
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Controles de búsqueda y filtros -->
+    <div class="mb-6 px-6">
+      <div class="flex flex-col sm:flex-row gap-4">
+        <div class="flex-1">
+          <div class="relative">
+            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
+            </svg>
+            <input 
+              type="text" 
+              placeholder="Buscar civilización..." 
+              class="w-full pl-10 pr-4 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 placeholder-neutral-500 dark:placeholder-neutral-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              id={`search-${modalId}`}
+              oninput={`filterCivs('${modalId}')`}
+            />
+          </div>
+        </div>
+        
+        <div class="flex gap-2">
+          <select 
+            class="px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            id={`sort-${modalId}`}
+            onchange={`sortCivs('${modalId}')`}
+          >
+            <option value="rating-desc">Rating (Mayor a Menor)</option>
+            <option value="rating-asc">Rating (Menor a Mayor)</option>
+            <option value="name-asc">Nombre (A-Z)</option>
+            <option value="name-desc">Nombre (Z-A)</option>
+          </select>
+          
+          <select 
+            class="px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            id={`filter-${modalId}`}
+            onchange={`filterByRating('${modalId}')`}
+          >
+            <option value="all">Todos los ratings</option>
+            <option value="95+">95+ (Excelente)</option>
+            <option value="90-94">90-94 (Muy bueno)</option>
+            <option value="85-89">85-89 (Bueno)</option>
+            <option value="<85">< 85 (Regular)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de civilizaciones -->
+    <div class="overflow-y-auto max-h-96 px-6" id={`civs-container-${modalId}`}>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id={`civs-grid-${modalId}`}>
+        {allCivsSorted.map(([civName, rating], index) => (
+          <div 
+            key={civName} 
+            class="civ-item bg-neutral-50 dark:bg-neutral-700 rounded-lg p-4 border border-neutral-200 dark:border-neutral-600 hover:shadow-md transition-all duration-200"
+            data-name={civName.toLowerCase()}
+            data-rating={rating}
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center space-x-3">
+                <div class:list={[
+                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white",
+                  index === 0 ? 'bg-yellow-500' : 
+                  index === 1 ? 'bg-gray-400' : 
+                  index === 2 ? 'bg-amber-600' : 
+                  index < 10 ? 'bg-blue-500' : 'bg-neutral-400'
+                ]}>
+                  {index + 1}
+                </div>
+                <div>
+                  <h4 class="font-semibold text-neutral-900 dark:text-neutral-100">
+                    {civName}
+                  </h4>
+                  <p class="text-xs text-neutral-500 dark:text-neutral-400">
+                    Posición #{index + 1}
+                  </p>
+                </div>
+              </div>
+              
+              <div class="text-right">
+                <div class:list={[
+                  "text-xl font-bold",
+                  getRatingColor(rating)
+                ]}>
+                  {rating}
+                </div>
+                <div class="text-xs text-neutral-500 dark:text-neutral-400">
+                  Rating
+                </div>
+              </div>
+            </div>
+            
+            <!-- Barra de progreso -->
+            <div class="w-full bg-neutral-200 dark:bg-neutral-600 rounded-full h-3">
+              <div 
+                class:list={[
+                  "h-3 rounded-full transition-all duration-500",
+                  getProgressColor(rating)
+                ]}
+                style={`width: ${rating}%`}
+              ></div>
+            </div>
+            
+            <!-- Información adicional -->
+            <div class="mt-3 flex items-center justify-between text-xs">
+              <span class:list={[
+                "px-2 py-1 rounded-full font-medium",
+                rating >= 95 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                rating >= 90 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                rating >= 85 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+              ]}>
+                {rating >= 95 ? 'Excelente' :
+                 rating >= 90 ? 'Muy bueno' :
+                 rating >= 85 ? 'Bueno' : 'Regular'}
+              </span>
+              
+              <span class="text-neutral-500 dark:text-neutral-400">
+                {Math.round((rating / 99) * 100)}% del máximo
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Footer del modal -->
+    <div class="mt-6 pt-4 border-t border-neutral-200 dark:border-neutral-600 px-6 pb-6">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-neutral-500 dark:text-neutral-400">
+          <span id={`showing-count-${modalId}`}>{totalCivs}</span> de {totalCivs} civilizaciones
+        </div>
+        
+        <div class="flex items-center space-x-2">
+          <button 
+            class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
+            onclick={`document.getElementById('${modalId}').close()`}
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<script define:vars={{ modalId, allCivsSorted, mapData }}>
+  // Funciones para el modal
+  window.filterCivs = function(modalId) {
+    const searchInput = document.getElementById(`search-${modalId}`);
+    const civsGrid = document.getElementById(`civs-grid-${modalId}`);
+    const showingCount = document.getElementById(`showing-count-${modalId}`);
+    const searchTerm = searchInput.value.toLowerCase();
+    
+    const civItems = civsGrid.querySelectorAll('.civ-item');
+    let visibleCount = 0;
+    
+    civItems.forEach(item => {
+      const civName = item.dataset.name;
+      if (civName.includes(searchTerm)) {
+        item.style.display = 'block';
+        visibleCount++;
+      } else {
+        item.style.display = 'none';
+      }
+    });
+    
+    showingCount.textContent = visibleCount;
+  };
+
+  window.sortCivs = function(modalId) {
+    const sortSelect = document.getElementById(`sort-${modalId}`);
+    const civsGrid = document.getElementById(`civs-grid-${modalId}`);
+    const sortValue = sortSelect.value;
+    
+    const civItems = Array.from(civsGrid.querySelectorAll('.civ-item'));
+    
+    civItems.sort((a, b) => {
+      const nameA = a.dataset.name;
+      const nameB = b.dataset.name;
+      const ratingA = parseInt(a.dataset.rating);
+      const ratingB = parseInt(b.dataset.rating);
+      
+      switch (sortValue) {
+        case 'rating-desc':
+          return ratingB - ratingA;
+        case 'rating-asc':
+          return ratingA - ratingB;
+        case 'name-asc':
+          return nameA.localeCompare(nameB);
+        case 'name-desc':
+          return nameB.localeCompare(nameA);
+        default:
+          return 0;
+      }
+    });
+    
+    // Reordenar elementos en el DOM
+    civItems.forEach(item => civsGrid.appendChild(item));
+  };
+
+  window.filterByRating = function(modalId) {
+    const filterSelect = document.getElementById(`filter-${modalId}`);
+    const civsGrid = document.getElementById(`civs-grid-${modalId}`);
+    const showingCount = document.getElementById(`showing-count-${modalId}`);
+    const filterValue = filterSelect.value;
+    
+    const civItems = civsGrid.querySelectorAll('.civ-item');
+    let visibleCount = 0;
+    
+    civItems.forEach(item => {
+      const rating = parseInt(item.dataset.rating);
+      let shouldShow = true;
+      
+      switch (filterValue) {
+        case '95+':
+          shouldShow = rating >= 95;
+          break;
+        case '90-94':
+          shouldShow = rating >= 90 && rating < 95;
+          break;
+        case '85-89':
+          shouldShow = rating >= 85 && rating < 90;
+          break;
+        case '<85':
+          shouldShow = rating < 85;
+          break;
+        case 'all':
+        default:
+          shouldShow = true;
+          break;
+      }
+      
+      if (shouldShow) {
+        item.style.display = 'block';
+        visibleCount++;
+      } else {
+        item.style.display = 'none';
+      }
+    });
+    
+    showingCount.textContent = visibleCount;
+  };
+
+  // Cerrar modal al hacer clic fuera
+  document.getElementById(modalId).addEventListener('click', function(e) {
+    if (e.target === this) {
+      this.close();
+    }
+  });
+</script>
+
+<style>
+  dialog:not([open]) {
+    display: none;
+  }
+  
+  dialog[open] {
+    display: flex;
+  }
+</style>
