@@ -29,7 +29,7 @@ try {
     <MapCard 
       key={mapData._id}
       mapData={mapData}
-      imageUrl={`/maps/${mapData.name.toLowerCase().replace(/\s+/g, '')}.png`}
+      imageUrl={`maps/${mapData.name.toLowerCase().replace(/\s+/g, '')}.png`}
       showTopCivs={5}
     />
   ))}
