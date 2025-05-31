@@ -1,0 +1,103 @@
+---
+// src/components/PlayersTable.astro
+import type { PlayerStats } from "../types";
+
+const { players = [] }: { players?: PlayerStats[] } = Astro.props;
+---
+
+<section class="max-w-6xl mx-auto px-4 lg:px-0 py-8">
+  <div class="overflow-x-auto">
+    <table
+      class="min-w-full table-auto border-separate border-spacing-0 bg-white dark:bg-neutral-800 rounded-xl shadow-lg border border-neutral-200 dark:border-neutral-700"
+    >
+      <thead class="">
+        <tr>
+          <th class="px-4 py-3 text-left text-sm font-medium">Rank</th>
+          <th class="px-4 py-3 text-left text-sm font-medium">Rating</th>
+          <th class="px-4 py-3 text-left text-sm font-medium">Name</th>
+          <th class="px-4 py-3 text-center text-sm font-medium">Games</th>
+          <th class="px-4 py-3 text-center text-sm font-medium">Wins</th>
+          <th class="px-4 py-3 text-center text-sm font-medium">Losses</th>
+          <th class="px-4 py-3 text-center text-sm font-medium">Winrate</th>
+          <th class="px-4 py-3 text-left text-sm font-medium">Performance</th>
+          <th class="px-4 py-3 text-left text-sm font-medium">Last Game</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        {
+          players.map((player) => (
+            <tr class="group hover:bg-gray-800 transition-colors">
+              {/* Rank */}
+              <td class="px-4 py-3 whitespace-nowrap  text-sm font-semibold">
+                {player.rank}
+              </td>
+
+              {/* Rating */}
+              <td class="px-4 py-3 whitespace-nowrap text-sm">
+                {player.rating}
+              </td>
+
+              {/* Name (sin bandera, porque no tenemos countryCode en este ejemplo) */}
+              <td class="px-4 py-3 flex flex-col whitespace-nowrap">
+                <span class=" font-medium text-sm">{player.displayName}</span>
+                <span class=" text-xs">{player.playerName}</span>
+              </td>
+
+              {/* Games */}
+              <td class="px-4 py-3 whitespace-nowrap text-center text-gray-200 text-sm">
+                {player.games}
+              </td>
+
+              {/* Wins */}
+              <td class="px-4 py-3 whitespace-nowrap text-center text-green-400 text-sm font-semibold">
+                {player.wins}
+              </td>
+
+              {/* Losses */}
+              <td class="px-4 py-3 whitespace-nowrap text-center text-red-500 text-sm font-semibold">
+                {player.losses}
+              </td>
+
+              {/* Winrate */}
+              <td class="px-4 py-3 whitespace-nowrap text-center text-gray-200 text-sm">
+                {(player.winrate * 100).toFixed(2)}%
+              </td>
+
+              {/* Performance: barra + puntos pequeños + delta + fuego */}
+              <td class="px-4 py-3 whitespace-nowrap text-sm">
+                <div class="flex items-center space-x-2">
+                  {/* 1) Dot-chart: recorremos lastResults para pintar verde o rojo */}
+                  <div class="flex space-x-1">
+                    {player.lastResults.reverse().map((wasWin, idx) => (
+                      <span
+                        key={idx}
+                        class={`w-2 h-2 rounded-full ${
+                          wasWin ? "bg-green-400" : "bg-red-500"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  {/* 2) Texto con la “racha” (performance) */}
+                  <span class="ml-2 text-sm font-medium text-gray-100">
+                    {player.performance}
+                  </span>
+                  {/* 3) Fuego si la racha es ≥ 1 */}
+                  {player.performance > 0 && (
+                    <span class="ml-1 text-red-500 text-base animate-pulse">
+                      🔥
+                    </span>
+                  )}
+                </div>
+              </td>
+
+              {/* Last Game */}
+              <td class="px-4 py-3 whitespace-nowrap  text-sm">
+                {player.lastGame}
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

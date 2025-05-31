@@ -1,0 +1,161 @@
+---
+import PlayersTable from '../components/PlayersTable.astro';
+import Layout from '../layouts/Layout.astro';
+import type { PlayerFromAPI, MatchFromAPI, PlayerStats } from '../types';
+
+// 1. Fetch a /players
+const playersRes = await fetch('https://apibot.server211.ovh/players');
+const rawPlayers: PlayerFromAPI[] = await playersRes.json();
+
+// 2. Fetch a /matches
+const matchesRes = await fetch('https://apibot.server211.ovh/matches');
+const rawMatches: MatchFromAPI[] = await matchesRes.json();
+
+// 3. Construimos un diccionario (statsMap) con counters básicos y otro (resultsMap) con todas las partidas de cada userId
+interface TempStats {
+  userId: string;
+  games: number;
+  wins: number;
+  losses: number;
+  lastGameDate: string; // usaremos ISO string para comparar fechas
+}
+const statsMap: Record<string, TempStats> = {};
+
+// Además, creamos un map para los resultados ordenados de cada jugador:
+interface ResultEntry {
+  isWin: boolean;
+  finishedAt: string; // fecha ISO para ordenar
+}
+const resultsMap: Record<string, ResultEntry[]> = {};
+
+// 3a. Inicializar ambos mapas con todos los jugadores de /players
+for (const p of rawPlayers) {
+  statsMap[p.userId] = {
+    userId: p.userId,
+    games: 0,
+    wins: 0,
+    losses: 0,
+    lastGameDate: '',
+  };
+  resultsMap[p.userId] = [];
+}
+
+// 3b. Recorremos cada match para actualizar counters y push en resultsMap
+for (const match of rawMatches) {
+  if (match.status !== 'completed') continue;
+
+  // Preferimos finishedAt para saber cuándo terminó; si no viene, usamos createdAt
+  const finishedAt: string = (match as any).finishedAt || (match as any).createdAt || '';
+
+  // Función helper para procesar a un jugador que esté en team1 o team2:
+  function processMember(memberId: string, isInTeam1: boolean) {
+    // 1) Actualizamos games/wins/losses
+    const temp = statsMap[memberId];
+    temp.games += 1;
+    const didWin = (isInTeam1 && match.winner === 1) || (!isInTeam1 && match.winner === 2);
+    if (didWin) {
+      temp.wins += 1;
+    } else {
+      temp.losses += 1;
+    }
+    // 2) Actualizamos la última fecha si es más reciente
+    if (!temp.lastGameDate || temp.lastGameDate < finishedAt) {
+      temp.lastGameDate = finishedAt;
+    }
+    // 3) Guardamos en resultsMap el resultado (win/loss)
+    resultsMap[memberId].push({
+      isWin: didWin,
+      finishedAt,
+    });
+  }
+
+  // Recorremos team1
+  for (const member of match.team1) {
+    processMember(member.id, true);
+  }
+  // Recorremos team2
+  for (const member of match.team2) {
+    processMember(member.id, false);
+  }
+}
+
+// 4. Ahora transformamos rawPlayers → PlayerStats[] calculando winrate, lastResults y performance
+let allStats: PlayerStats[] = rawPlayers.map((p) => {
+  const temp = statsMap[p.userId];
+
+  // a) Calcular winrate
+  const winrate = temp.games > 0 ? temp.wins / temp.games : 0;
+
+  // b) Ordenar los resultados de este jugador de más reciente a más antiguo
+  const sortedResults = resultsMap[p.userId].sort((a, b) => {
+    // Orden descendente por fecha ISO
+    if (a.finishedAt > b.finishedAt) return -1;
+    if (a.finishedAt < b.finishedAt) return 1;
+    return 0;
+  });
+
+  // c) Tomar los últimos N resultados (por ejemplo N = 10)
+  const N = 10;
+  const lastN = sortedResults.slice(0, N);
+
+  // d) Construir un arreglo boolean[] de length N (pudo haber menos de N partidas)
+  //    Si el jugador no tiene N partidas, rellenamos con “false” al final (o lo dejamos vacío)
+  const lastResults: boolean[] = lastN.map((r) => r.isWin);
+
+  // Si queremos exactamente length = N y rellenar con falsos:
+  while (lastResults.length < N) {
+    lastResults.push(false);
+  }
+
+  // e) Calcular “performance” como número de wins consecutivos desde el último partido
+  let streak = 0;
+  for (const isWin of lastResults) {
+    if (isWin) streak += 1;
+    else break; // en cuanto encontramos una derrota, detenemos el conteo
+  }
+
+  // f) Calcular “lastGame” en formato “X hours/days ago”
+  let lastGameText = '—';
+  if (temp.lastGameDate) {
+    const diffMs = Date.now() - new Date(temp.lastGameDate).getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (diffHours < 24) {
+      lastGameText = `${diffHours} hours ago`;
+    } else {
+      const diffDays = Math.floor(diffHours / 24);
+      lastGameText = `${diffDays} days ago`;
+    }
+  }
+
+  return {
+    rank: 0, // acá lo asignamos después
+    userId: p.userId,
+    displayName: p.displayName,
+    playerName: p.playerName,
+    rating: p.elo,
+    games: temp.games,
+    wins: temp.wins,
+    losses: temp.losses,
+    winrate,
+    delta7: 0,              // placeholder
+    performance: streak,    // número de wins consecutivos
+    lastResults,            // arreglo booleano de los últimos N resultados
+    lastGame: lastGameText,
+  };
+});
+
+// 5. Ordenamos por rating (elo) descendente y tomamos top 10
+allStats.sort((a, b) => b.rating - a.rating);
+allStats = allStats.map((p, idx) => ({
+  ...p,
+  rank: idx + 1,
+}));
+
+const top10Stats: PlayerStats[] = allStats;
+---
+<Layout>
+      <PlayersTable players={top10Stats} />
+
+</Layout>
+
+
