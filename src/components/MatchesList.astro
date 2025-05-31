@@ -1,0 +1,154 @@
+---
+// src/components/MatchesList.astro
+import type { MatchFromAPI, MapFromAPI } from '../types';
+
+interface Props {
+  matches: MatchFromAPI[];
+  maps: MapFromAPI[];
+}
+
+const { matches, maps } = Astro.props as Props;
+---
+
+<section class="grid grid-cols-3 gap-6  p-6 space-y-8 ">
+  {matches.map((match) => {
+    const mapInfo = maps.find((m) => m.name === match.map);
+
+    const createdDate = match.createdAt
+      ? new Date(match.createdAt).toLocaleString('es-AR', {
+          dateStyle: 'short',
+          timeStyle: 'short',
+        })
+      : '—';
+
+    const finishedDate = match.finishedAt
+      ? new Date(match.finishedAt).toLocaleString('es-AR', {
+          dateStyle: 'short',
+          timeStyle: 'short',
+        })
+      : '—';
+
+    return (
+      <article
+        key={match._id}
+        class="rounded  bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition p-4"
+      >
+        <!-- Encabezado de la partida -->
+        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+          <div class="flex items-center space-x-2">
+            <span class="px-2 py-0.5 text-sm font-semibold rounded">
+              Game #{match.game_number}
+            </span>
+            <span class="text-gray-300 text-sm">
+              Estado: 
+              <span
+                class={`ml-1 font-medium ${
+                  match.status === 'completed' ? 'text-green-400' : 'text-yellow-400'
+                }`}
+              >
+                {match.status === 'completed' ? '✔️ Completed' : '⏳ Ongoing'}
+              </span>
+            </span>
+          </div>
+          {mapInfo && (
+            <div class="mt-2 sm:mt-0 flex items-center space-x-2">
+              <span class="text-gray-200 font-semibold">{mapInfo.name}</span>
+              <span class="text-gray-400 text-sm">
+                ({mapInfo.type}, chance: {mapInfo.chance}%)
+              </span>
+            </div>
+          )}
+        </header>
+
+        <!-- Cuerpo: dos columnas para Team 1 y Team 2 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <!-- Team 1 -->
+          <div
+            class={`p-4 rounded-lg border ${
+              match.winner === 1
+                ? 'bg-green-900 border-green-600'
+                : 'bg-gray-600 border-gray-700'
+            }`}
+          >
+            <h3 class="text-lg font-semibold text-gray-100 mb-2">Team 1</h3>
+            <ul class="space-y-2">
+              {match.team1.map((member) => {
+                // Datos de civ para este userId
+                const civData = match.team1_civs[member.id];
+                return (
+                  <li key={member.id} class="flex justify-between items-center">
+                    <div class="flex flex-col">
+                      <span class="text-gray-100 font-medium">
+                        {member.name}
+                      </span>
+                      <span class="text-gray-400 text-xs"></span>
+                    </div>
+                    {civData ? (
+                      <div class="text-right">
+                        <span class="text-green-300 text-sm font-medium">
+                          {civData.main} ({civData.main_score})
+                        </span>
+                        <span class="block text-gray-500 text-xs">
+                          Alt: {civData.alt} ({civData.alt_score})
+                        </span>
+                      </div>
+                    ) : (
+                      <span class="text-gray-500 text-sm">No Civ</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <!-- Team 2 -->
+          <div
+            class={`p-4 rounded-lg border ${
+              match.winner === 2
+                ? 'bg-green-900 border-green-600'
+                : 'bg-gray-600 border-gray-700'
+            }`}
+          >
+            <h3 class="text-lg font-semibold text-gray-100 mb-2">Team 2</h3>
+            <ul class="space-y-2">
+              {match.team2.map((member) => {
+                const civData = match.team2_civs[member.id];
+                return (
+                  <li key={member.id} class="flex justify-between items-center">
+                    <div class="flex flex-col">
+                      <span class="text-gray-100 font-medium">
+                        {member.name}
+                      </span>
+                      <span class="text-gray-400 text-xs"></span>
+                    </div>
+                    {civData ? (
+                      <div class="text-right">
+                        <span class="text-green-300 text-sm font-medium">
+                          {civData.main} ({civData.main_score})
+                        </span>
+                        <span class="block text-gray-500 text-xs">
+                          Alt: {civData.alt} ({civData.alt_score})
+                        </span>
+                      </div>
+                    ) : (
+                      <span class="text-gray-500 text-sm">No Civ</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+
+        <!-- Pie de página: Fechas y veces elegido el mapa -->
+        <footer class="text-gray-400 text-sm flex flex-col sm:flex-row sm:justify-between sm:items-center">
+          <div>
+            <span>Creado: {createdDate}</span>
+            <span class="mx-2">|</span>
+            <span>Finalizado: {finishedDate}</span>
+          </div>
+        </footer>
+      </article>
+    );
+  })}
+</section>

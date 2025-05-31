@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MatchesList from "../components/MatchesList.astro";
+import type { MatchFromAPI, MapFromAPI } from "../types";
+import { LayoutGridIcon } from '@lucide/astro';
+
+const matchesRes = await fetch("https://apibot.server211.ovh/matches");
+const rawMatches: MatchFromAPI[] = await matchesRes.json();
+
+const mapsRes = await fetch("https://apibot.server211.ovh/maps");
+const rawMaps: MapFromAPI[] = await mapsRes.json();
+
+const matches = rawMatches.sort((a, b) => a.game_number - b.game_number).reverse();
+const maps = rawMaps;
+---
+
+<Layout>
+  
+  <MatchesList matches={matches} maps={maps} />
+</Layout>
