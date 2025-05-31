@@ -6,13 +6,27 @@ import Header from "../components/Header.astro";
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-F4B2C42N43"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+
+      gtag("config", "G-F4B2C42N43");
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>Astro Basics</title>
   </head>
-  <body class="bg-background text-foreground dark:bg-neutral-900 dark:text-neutral-100 transition-colors">
+  <body
+    class="bg-background text-foreground dark:bg-neutral-900 dark:text-neutral-100 transition-colors"
+  >
     <Header />
     <main class="p-6">
       <slot />
