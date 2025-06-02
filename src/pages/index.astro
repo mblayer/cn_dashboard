@@ -5,14 +5,19 @@ import MapBarChart from "../components/MapBarChart.jsx";
 import { List, MapPin, Users, Trophy } from "@lucide/astro";
 import CivBarChart from "../components/CivBarChart.jsx";
 import FeaturedPlayers from "../components/FeaturedPlayers.astro";
-import TeamVersus from "../components/Versus.astro";
+import MatchCard from "../components/MatchCard.astro";
 export const prerender = false;
+
 const API_URL = "https://apibot.server211.ovh/matches";
+const MAPS_API_URL = "https://apibot.server211.ovh/maps"; // Nueva API para mapas
 
 let matches = [];
+let maps = [];
 try {
   const res = await fetch(API_URL);
   matches = res.ok ? await res.json() : [];
+  const mapsRes = await fetch(MAPS_API_URL);
+  maps = mapsRes.ok ? await mapsRes.json() : [];
 } catch (err) {
   console.error("Error conectando con la API:", err);
 }
@@ -98,6 +103,13 @@ const topPlayers = Object.entries(playerStats)
   .map(([name, stats]) => ({ name, ...stats }))
   .sort((a, b) => b.wins - a.wins)
   .slice(0, 5);
+
+// --- Última partida y su mapInfo ---
+const lastMatch = matches.length > 0 ? matches[matches.length - 1] : null;
+const mapInfo =
+  lastMatch && Array.isArray(maps)
+    ? maps.find((m) => m.name === lastMatch.map)
+    : undefined;
 ---
 
 <Layout>
@@ -172,9 +184,9 @@ const topPlayers = Object.entries(playerStats)
         <FeaturedPlayers players={topPlayers} />
       </div>
       <div class="w-full">
-        <!-- <RecentMatches matches={matches} /> -->
-
-        <TeamVersus match={matches.reverse()[0]} title="Ultima Partida" />
+        {lastMatch && (
+          <MatchCard match={lastMatch} mapInfo={mapInfo} />
+        )}
       </div>
     </div>
   </div>

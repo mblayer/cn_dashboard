@@ -1,6 +1,7 @@
 ---
 // src/components/MatchesList.astro
 import type { MatchFromAPI, MapFromAPI } from '../types';
+import MatchCard from './MatchCard.astro';
 
 interface Props {
   matches: MatchFromAPI[];
@@ -14,110 +15,6 @@ const { matches, maps } = Astro.props as Props;
 <section class="flex flex-col gap-6 p-4 sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
   {matches.map((match) => {
     const mapInfo = maps.find((m) => m.name === match.map);
-
-    const createdDate = match.createdAt
-      ? new Date(match.createdAt).toLocaleString('es-AR', {
-          dateStyle: 'short',
-          timeStyle: 'short',
-        })
-      : '—';
-
-    const finishedDate = match.finishedAt
-      ? new Date(match.finishedAt).toLocaleString('es-AR', {
-          dateStyle: 'short',
-          timeStyle: 'short',
-        })
-      : '—';
-
-    return (
-      <article
-        key={match._id}
-        class="w-full rounded bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition p-4 shadow border border-neutral-300 dark:border-neutral-600 flex flex-col gap-2"
-      >
-        <header class="flex flex-col gap-1 mb-2">
-          <div class="flex items-center gap-2">
-            <span class="px-2 py-0.5 text-sm font-semibold rounded bg-neutral-300 dark:bg-neutral-600">
-              Game #{match.game_number}
-            </span>
-            <span class="text-gray-400 text-xs">
-              Estado:
-              <span
-                class={`ml-1 font-medium ${
-                  match.status === 'completed' ? 'text-green-500' : 'text-yellow-400'
-                }`}
-              >
-                {match.status === 'completed' ? '✔️ Completed' : '⏳ Ongoing'}
-              </span>
-            </span>
-          </div>
-          {mapInfo && (
-            <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-300">
-              <span class="font-semibold">{mapInfo.name}</span>
-              <span>
-                ({mapInfo.type}, chance: {mapInfo.chance}%)
-              </span>
-            </div>
-          )}
-        </header>
-        <div>
-          <div
-            class={`mb-2 p-3 rounded-lg border ${
-              match.winner === 1
-                ? 'bg-green-900 border-green-600'
-                : 'bg-gray-600 border-gray-700'
-            }`}
-          >
-            <h3 class="text-base font-semibold text-gray-100 mb-1">Team 1</h3>
-            <ul class="space-y-1">
-              {match.team1.map((member) => {
-                const civData = match.team1_civs[member.id];
-                return (
-                  <li key={member.id} class="flex justify-between items-center">
-                    <span class="text-gray-100 font-medium">{member.name}</span>
-                    {civData ? (
-                      <span class="text-green-300 text-xs font-medium">
-                        {civData.main} ({civData.main_score})
-                      </span>
-                    ) : (
-                      <span class="text-gray-400 text-xs">No Civ</span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-          <div
-            class={`mb-2 p-3 rounded-lg border ${
-              match.winner === 2
-                ? 'bg-green-900 border-green-600'
-                : 'bg-gray-600 border-gray-700'
-            }`}
-          >
-            <h3 class="text-base font-semibold text-gray-100 mb-1">Team 2</h3>
-            <ul class="space-y-1">
-              {match.team2.map((member) => {
-                const civData = match.team2_civs[member.id];
-                return (
-                  <li key={member.id} class="flex justify-between items-center">
-                    <span class="text-gray-100 font-medium">{member.name}</span>
-                    {civData ? (
-                      <span class="text-green-300 text-xs font-medium">
-                        {civData.main} ({civData.main_score})
-                      </span>
-                    ) : (
-                      <span class="text-gray-400 text-xs">No Civ</span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </div>
-        <footer class="text-gray-500 text-xs flex flex-col gap-1 mt-2">
-          <span>Creado: {createdDate}</span>
-          <span>Finalizado: {finishedDate}</span>
-        </footer>
-      </article>
-    );
+    return <MatchCard match={match} mapInfo={mapInfo} />;
   })}
 </section>
