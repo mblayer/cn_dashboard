@@ -1,6 +1,6 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import MapCard from '../components/mapCard.astro';
+import Layout from "../layouts/Layout.astro";
+import MapCard from "../components/mapCard.astro";
 
 interface Props {
   maps: any[];
@@ -17,23 +17,19 @@ try {
 } catch (err) {
   console.error("Error conectando con la API:", err);
 }
-
 ---
 
 <Layout title="Maps">
-    
-<div class:list={[
-  "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 p-6 space-y-8",
-]}>
-  {maps.map((mapData) => (
-    <MapCard 
-      key={mapData._id}
-      mapData={mapData}
-      imageUrl={`maps/${mapData.name.toLowerCase().replace(/\s+/g, '')}.png`}
-      showTopCivs={5}
-    />
-  ))}
-</div>
-    
+  <div class:list={["grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"]}>
+    {
+      maps.map((mapData) => (
+        <MapCard
+          key={mapData._id}
+          mapData={mapData}
+          imageUrl={`maps/${mapData.name.toLowerCase().replace(/\s+/g, "")}.png`}
+          showTopCivs={5}
+        />
+      ))
+    }
+  </div>
 </Layout>
-
