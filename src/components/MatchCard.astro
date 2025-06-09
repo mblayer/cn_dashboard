@@ -64,13 +64,13 @@ const finishedDate = match.finishedAt
         {match.team1.map((member) => {
           const civData = match.team1_civs[member.id];
           return (
-            <li key={member.id} class="flex justify-between items-center">
+            <li key={member.id} class="grid grid-cols-2 items-center">
               <span class="text-gray-100 font-medium">{member.name}</span>
               {civData ? (
-                <span class="text-green-300 text-xs font-medium">
+                <span class="text-green-300 text-xs font-medium text-cente">
                   {civData.main} ({civData.main_score})
                 </span>
-                <span class="text-green-300 text-xs font-medium">
+                <span class="text-green-300 text-xs font-medium text-right">
                   {civData.alt} ({civData.alt_score})
                 </span>
               ) : (
@@ -93,12 +93,13 @@ const finishedDate = match.finishedAt
         {match.team2.map((member) => {
           const civData = match.team2_civs[member.id];
           return (
-            <li key={member.id} class="flex justify-between items-center">
+            <li key={member.id} class="grid grid-cols-2 items-center">
               <span class="text-gray-100 font-medium">{member.name}</span>
               {civData ? (
-                <span class="text-green-300 text-xs font-medium">
+                <span class="text-green-300 text-xs font-medium text-center">
                   {civData.main} ({civData.main_score})
-                </span>                <span class="text-green-300 text-xs font-medium">
+                </span>                
+                <span class="text-green-300 text-xs font-medium text-right">
                   {civData.alt} ({civData.alt_score})
                 </span>
               ) : (
