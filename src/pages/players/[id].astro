@@ -2,6 +2,7 @@
 // filepath: src/pages/players/[id].astro
 import Layout from "../../layouts/Layout.astro";
 import MatchCard from "../../components/MatchCard.astro";
+export const prerender = false;
 
 const API_URL = "https://apibot.server211.ovh/matches";
 const MAPS_API_URL = "https://apibot.server211.ovh/maps";

@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import MatchesList from "../components/MatchesList.astro";
 import type { MatchFromAPI, MapFromAPI } from "../types";
-import { LayoutGridIcon } from '@lucide/astro';
+export const prerender = false;
 
 const matchesRes = await fetch("https://apibot.server211.ovh/matches");
 const rawMatches: MatchFromAPI[] = await matchesRes.json();

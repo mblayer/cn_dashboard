@@ -2,6 +2,7 @@
 import PlayersTable from '../components/PlayersTable.astro';
 import Layout from '../layouts/Layout.astro';
 import type { PlayerFromAPI, MatchFromAPI, PlayerStats } from '../types';
+export const prerender = false;
 
 // 1. Fetch a /players
 const playersRes = await fetch('https://apibot.server211.ovh/players');
