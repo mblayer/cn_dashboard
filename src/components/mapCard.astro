@@ -188,7 +188,7 @@ const modalId = `modal-${mapData._id}`;
                     "h-2 rounded-full transition-all duration-500",
                     getProgressColor(rating)
                   ]}
-                  style={`width: ${rating}%`}
+                  style={`width: ${(rating - 85) * (100 / 15)}%`}
                 ></div>
               </div>
             </div>
