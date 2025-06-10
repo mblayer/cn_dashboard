@@ -6,18 +6,23 @@ import { List, MapPin, Users, Trophy } from "@lucide/astro";
 import CivBarChart from "../components/CivBarChart.jsx";
 import FeaturedPlayers from "../components/FeaturedPlayers.astro";
 import MatchCard from "../components/MatchCard.astro";
+import ActivityChart from "../components/ActivityChart.jsx";
 export const prerender = false;
 
 const API_URL = "https://apibot.server211.ovh/matches";
 const MAPS_API_URL = "https://apibot.server211.ovh/maps"; // Nueva API para mapas
+const ACTIVITY_API_URL = "https://apibot.server211.ovh/matches/activity";
 
 let matches = [];
 let maps = [];
+let activityData = [];
 try {
   const res = await fetch(API_URL);
   matches = res.ok ? await res.json() : [];
   const mapsRes = await fetch(MAPS_API_URL);
   maps = mapsRes.ok ? await mapsRes.json() : [];
+  const activityRes = await fetch(ACTIVITY_API_URL);
+  activityData = activityRes.ok ? await activityRes.json() : [];
 } catch (err) {
   console.error("Error conectando con la API:", err);
 }
@@ -189,5 +194,15 @@ const mapInfo =
         )}
       </div>
     </div>
+
+        <!-- Activity Chart -->
+        <div class="w-full">
+          <ActivityChart
+            client:load
+            data={activityData}
+            title="Actividad por Hora"
+            subtitle="Distribución de partidas por hora del día"
+          />
+        </div>
   </div>
 </Layout>
