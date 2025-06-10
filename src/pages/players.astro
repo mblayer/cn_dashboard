@@ -100,11 +100,11 @@ let allStats: PlayerStats[] = rawPlayers.map((p) => {
 
   // d) Construir un arreglo boolean[] de length N (pudo haber menos de N partidas)
   //    Si el jugador no tiene N partidas, rellenamos con “false” al final (o lo dejamos vacío)
-  const lastResults: boolean[] = lastN.map((r) => r.isWin);
+  const lastResults: (boolean | undefined)[] = lastN.map((r) => r.isWin);
 
-  // Si queremos exactamente length = N y rellenar con falsos:
+  // Si queremos exactamente length = N y rellenar con undefined:
   while (lastResults.length < N) {
-    lastResults.push(false);
+    lastResults.push(undefined);
   }
 
   // e) Calcular “performance” como número de wins consecutivos desde el último partido
