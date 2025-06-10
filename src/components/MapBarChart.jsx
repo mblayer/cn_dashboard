@@ -67,7 +67,7 @@ const MapBarChart = ({
             tick={{ fill: '#666', className: 'dark:fill-neutral-400' }}
           />
           <Tooltip
-            contentStyle={{ backgroundColor: '#fff', borderColor: '#ccc' }}
+            contentStyle={{ backgroundColor: '#262626', borderColor: '#ccc' }}
             wrapperStyle={{ outline: 'none' }}
           />
           <Legend
