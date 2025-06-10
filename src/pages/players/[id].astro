@@ -1,0 +1,165 @@
+---
+// filepath: src/pages/players/[id].astro
+import Layout from "../../layouts/Layout.astro";
+import MatchCard from "../../components/MatchCard.astro";
+
+const API_URL = "https://apibot.server211.ovh/matches";
+const MAPS_API_URL = "https://apibot.server211.ovh/maps";
+const PLAYERS_API_URL = "https://apibot.server211.ovh/players";
+
+export async function getStaticPaths() {
+  const res = await fetch("https://apibot.server211.ovh/players");
+  const players = res.ok ? await res.json() : [];
+  return players.map((player) => ({
+    params: { id: player.userId || player.id }
+  }));
+}
+
+const { id } = Astro.params;
+
+// Obtener datos de APIs
+let matches = [];
+let maps = [];
+let player = null;
+let allPlayers = [];
+
+try {
+  const [matchesRes, mapsRes, playerRes, allPlayersRes] = await Promise.all([
+    fetch(API_URL),
+    fetch(MAPS_API_URL),
+    fetch(`${PLAYERS_API_URL}/${id}`),
+    fetch(PLAYERS_API_URL)
+  ]);
+  matches = matchesRes.ok ? await matchesRes.json() : [];
+  maps = mapsRes.ok ? await mapsRes.json() : [];
+  player = playerRes.ok ? await playerRes.json() : null;
+  allPlayers = allPlayersRes.ok ? await allPlayersRes.json() : [];
+} catch (err) {
+  console.error("Error conectando con la API:", err);
+}
+
+// Ordenar jugadores por nombre para navegación consistente
+allPlayers = allPlayers
+  .map((p) => ({
+    id: p.userId || p.id,
+    displayName: p.displayName ?? p.playerName ?? "Jugador"
+  }))
+  .sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+// Encontrar índice actual, anterior y siguiente
+const currentIndex = allPlayers.findIndex((p) => p.id === id);
+const prevPlayer = currentIndex > 0 ? allPlayers[currentIndex - 1] : null;
+const nextPlayer = currentIndex < allPlayers.length - 1 ? allPlayers[currentIndex + 1] : null;
+
+// Filtrar partidas donde jugó el jugador
+const playerMatches = matches.filter(
+  (m) =>
+    m.team1.some((p) => p.id === id || p.userId === id) ||
+    m.team2.some((p) => p.id === id || p.userId === id)
+);
+
+// KPIs del jugador
+const totalGames = player?.stats?.total ?? playerMatches.length;
+const wins = player?.stats?.wins ?? playerMatches.filter(
+  (m) =>
+    (m.winner === 1 && m.team1.some((p) => p.id === id || p.userId === id)) ||
+    (m.winner === 2 && m.team2.some((p) => p.id === id || p.userId === id))
+).length;
+const losses = player?.stats?.losses ?? (totalGames - wins);
+const winRate = player?.stats?.winrate ?? (totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0);
+const elo = player?.elo ?? null;
+const displayName = player?.displayName ?? player?.playerName ?? "Jugador";
+
+// Mapas jugados y más jugado
+const mapsPlayed = player?.stats?.mapsPlayed ?? {};
+const mostPlayed = player?.stats?.mostPlayed ?? null;
+
+// Últimas partidas (mostrar solo las 5 más recientes)
+const recentMatches = playerMatches.slice(-5).reverse();
+---
+
+<Layout>
+  <div class="max-w-3xl mx-auto p-6 space-y-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+      <div class="flex items-center gap-2">
+        {prevPlayer && (
+          <a
+            href={`/players/${prevPlayer.id}`}
+            title={`Anterior: ${prevPlayer.displayName}`}
+            class="inline-flex items-center px-2 py-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 transition"
+          >
+            <span aria-hidden="true" class="text-xl">&larr;</span>
+          </a>
+        )}
+        <h1 class="text-2xl font-bold">
+          Estadísticas de {displayName}
+        </h1>
+        {nextPlayer && (
+          <a
+            href={`/players/${nextPlayer.id}`}
+            title={`Siguiente: ${nextPlayer.displayName}`}
+            class="inline-flex items-center px-2 py-1 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700 transition"
+          >
+            <span aria-hidden="true" class="text-xl">&rarr;</span>
+          </a>
+        )}
+      </div>
+      {elo && (
+        <div class="text-lg font-semibold text-blue-600 dark:text-blue-300">
+          Elo: {elo}
+        </div>
+      )}
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-4 text-center">
+        <div class="text-2xl font-bold">{totalGames}</div>
+        <div class="text-xs text-neutral-500">Partidas jugadas</div>
+      </div>
+      <div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-4 text-center">
+        <div class="text-2xl font-bold text-green-500">{wins}</div>
+        <div class="text-xs text-neutral-500">Victorias</div>
+      </div>
+      <div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-4 text-center">
+        <div class="text-2xl font-bold text-red-500">{losses}</div>
+        <div class="text-xs text-neutral-500">Derrotas</div>
+      </div>
+      <div class="bg-white dark:bg-neutral-800 rounded-lg shadow p-4 text-center">
+        <div class="text-2xl font-bold">{winRate}%</div>
+        <div class="text-xs text-neutral-500">Winrate</div>
+      </div>
+    </div>
+    <div class="mb-6">
+      <div class="text-lg font-semibold mb-2">Mapas jugados</div>
+      {Object.keys(mapsPlayed).length === 0 && (
+        <div class="text-neutral-500">No hay datos de mapas jugados.</div>
+      )}
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {Object.entries(mapsPlayed).map(([map, data]) => (
+          <div class="flex items-center justify-between bg-neutral-100 dark:bg-neutral-700 rounded p-3">
+            <span class="font-medium">{map}</span>
+            <span class="text-xs text-neutral-500">
+              {data.games} partida{data.games !== 1 ? "s" : ""} / {data.wins} victoria{data.wins !== 1 ? "s" : ""}
+            </span>
+          </div>
+        ))}
+      </div>
+      {mostPlayed && (
+        <div class="mt-2 text-sm text-blue-600 dark:text-blue-300">
+          Mapa más jugado: <span class="font-semibold">{mostPlayed}</span>
+        </div>
+      )}
+    </div>
+    <div>
+      <h2 class="text-lg font-semibold mb-4">Últimas partidas</h2>
+      <div class="space-y-4">
+        {recentMatches.length === 0 && (
+          <div class="text-neutral-500">No hay partidas registradas.</div>
+        )}
+        {recentMatches.map((match) => {
+          const mapInfo = maps.find((m) => m.name === match.map);
+          return <MatchCard match={match} mapInfo={mapInfo} />;
+        })}
+      </div>
+    </div>
+  </div>
+</Layout>

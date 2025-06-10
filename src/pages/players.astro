@@ -141,6 +141,7 @@ let allStats: PlayerStats[] = rawPlayers.map((p) => {
     performance: streak,    // número de wins consecutivos
     lastResults,            // arreglo booleano de los últimos N resultados
     lastGame: lastGameText,
+    id: p.userId, // usamos userId como ID único
   };
 });
 

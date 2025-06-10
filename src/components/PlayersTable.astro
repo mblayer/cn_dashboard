@@ -38,7 +38,12 @@ const { players = [] }: { players?: PlayerStats[] } = Astro.props;
               </td>
               {/* Name */}
               <td class="px-4 py-3 flex flex-col whitespace-nowrap">
-                <span class="font-medium text-sm">{player.displayName}</span>
+                <a
+                  href={`/players/${player.id}`}
+                  class="text-blue-600 hover:underline dark:text-blue-400"
+                >
+                  {player.displayName}
+                </a>
                 <span class="text-xs">{player.playerName}</span>
               </td>
               {/* Games */}

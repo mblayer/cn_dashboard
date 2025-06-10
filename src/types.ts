@@ -34,6 +34,7 @@ export interface PlayerStats {
   lastGame: string; // texto tipo “3 days ago” (también placeholder)
   onFire?: boolean; // si el jugador está en racha (opcional)
   lastResults: boolean[]; // true for win, false for loss
+  id: string; // clave primaria para “linkear” (puedes usar _id de MatchFromAPI)
 }
 
 // src/types.ts

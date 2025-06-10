@@ -26,8 +26,8 @@ const finishedDate = match.finishedAt
 <article
   class="w-full bg-white dark:bg-neutral-800 rounded-lg shadow p-6 transition-colors "
 >
-  <header class="flex flex-col gap-1 mb-2">
-    <div class="flex items-center gap-2">
+  <header class="grid grid-cols-2 gap-1 mb-2">
+    <div class="flex items-center gap-2 ">
       <span class="px-2 py-0.5 text-sm font-semibold rounded bg-neutral-300 dark:bg-neutral-600">
         Game #{match.game_number}
       </span>
@@ -67,14 +67,18 @@ const finishedDate = match.finishedAt
             <li key={member.id} class="grid grid-cols-2 items-center">
               <span class="text-gray-100 font-medium">{member.name}</span>
               {civData ? (
-                <span class="text-green-300 text-xs font-medium text-center">
-                  {civData.main} ({civData.main_score})
-                </span>
-                <span class="text-green-300 text-xs font-medium text-right">
-                  {civData.alt} ({civData.alt_score})
-                </span>
+                <div class="flex justify items-center">
+                  <span class="text-green-300 text-xs font-medium text-left mr-5 w-[100px]">
+                    {civData.main} ({civData.main_score})
+                  </span>
+                  <span class="text-green-300 text-xs font-medium text-left w-[100px]">
+                    {civData.alt} ({civData.alt_score})
+                  </span>
+                </div>
+
               ) : (
                 <span class="text-gray-400 text-xs">No Civ</span>
+
               )}
             </li>
           );
@@ -96,14 +100,18 @@ const finishedDate = match.finishedAt
             <li key={member.id} class="grid grid-cols-2 items-center">
               <span class="text-gray-100 font-medium">{member.name}</span>
               {civData ? (
-                <span class="text-green-300 text-xs font-medium text-center">
-                  {civData.main} ({civData.main_score})
-                </span>                
-                <span class="text-green-300 text-xs font-medium text-right">
-                  {civData.alt} ({civData.alt_score})
-                </span>
+                <div class="flex justify items-center">
+                  <span class="text-green-300 text-xs font-medium text-left mr-5 w-[100px]">
+                    {civData.main} ({civData.main_score})
+                  </span>
+                  <span class="text-green-300 text-xs font-medium text-left w-[100px]">
+                    {civData.alt} ({civData.alt_score})
+                  </span>
+                </div>
+
               ) : (
                 <span class="text-gray-400 text-xs">No Civ</span>
+
               )}
             </li>
           );
