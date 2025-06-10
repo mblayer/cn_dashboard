@@ -14,6 +14,7 @@ let maps = [];
 try {
   const res = await fetch(API_URL);
   maps = res.ok ? await res.json() : [];
+  maps.sort((a, b) => b.chance - a.chance);
 } catch (err) {
   console.error("Error conectando con la API:", err);
 }
