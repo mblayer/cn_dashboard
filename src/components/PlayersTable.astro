@@ -3,6 +3,41 @@
 import type { PlayerStats } from "../types";
 
 const { players = [] }: { players?: PlayerStats[] } = Astro.props;
+
+// Ordenamiento por columna
+const sortOptions = [
+  { key: "rank", label: "Rank" },
+  { key: "rating", label: "Rating" },
+  { key: "displayName", label: "Name" },
+  { key: "games", label: "Games" },
+  { key: "wins", label: "Wins" },
+  { key: "losses", label: "Losses" },
+  { key: "winrate", label: "Winrate" },
+];
+
+let sortBy = Astro.url?.searchParams.get("sort") ?? "rank";
+let sortDir = Astro.url?.searchParams.get("dir") ?? "asc";
+
+function getSortedPlayers(players) {
+  return [...players].sort((a, b) => {
+    let cmp = 0;
+    if (sortBy === "displayName") {
+      cmp = (a.displayName ?? "").localeCompare(b.displayName ?? "");
+    } else if (sortBy === "winrate") {
+      cmp = (b.winrate ?? 0) - (a.winrate ?? 0);
+    } else {
+      cmp = (b[sortBy] ?? 0) - (a[sortBy] ?? 0);
+    }
+    return sortDir === "asc" ? -cmp : cmp;
+  });
+}
+
+const sortedPlayers = getSortedPlayers(players);
+
+function getSortUrl(key) {
+  let dir = sortBy === key && sortDir === "desc" ? "asc" : "desc";
+  return `?sort=${key}&dir=${dir}`;
+}
 ---
 
 <section class="max-w-6xl mx-auto px-4 lg:px-0 py-8 p-6 space-y-8">
@@ -13,20 +48,48 @@ const { players = [] }: { players?: PlayerStats[] } = Astro.props;
     >
       <thead>
         <tr>
-          <th class="px-4 py-3 text-left text-sm font-medium">Rank</th>
-          <th class="px-4 py-3 text-left text-sm font-medium">Rating</th>
-          <th class="px-4 py-3 text-left text-sm font-medium">Name</th>
-          <th class="px-4 py-3 text-center text-sm font-medium">Games</th>
-          <th class="px-4 py-3 text-center text-sm font-medium">Wins</th>
-          <th class="px-4 py-3 text-center text-sm font-medium">Losses</th>
-          <th class="px-4 py-3 text-center text-sm font-medium">Winrate</th>
+          <th class="px-4 py-3 text-left text-sm font-medium">
+            <a href={getSortUrl("rank")} class="hover:underline cursor-pointer">
+              Rank{sortBy === "rank" ? (sortDir === "asc" ? " ▲" : " ▼") : ""}
+            </a>
+          </th>
+          <th class="px-4 py-3 text-left text-sm font-medium">
+            <a href={getSortUrl("rating")} class="hover:underline cursor-pointer">
+              Rating{sortBy === "rating" ? (sortDir === "asc" ? " ▲" : " ▼") : ""}
+            </a>
+          </th>
+          <th class="px-4 py-3 text-left text-sm font-medium">
+            <a href={getSortUrl("displayName")} class="hover:underline cursor-pointer">
+              Name{sortBy === "displayName" ? (sortDir === "asc" ? " ▲" : " ▼") : ""}
+            </a>
+          </th>
+          <th class="px-4 py-3 text-center text-sm font-medium">
+            <a href={getSortUrl("games")} class="hover:underline cursor-pointer">
+              Games{sortBy === "games" ? (sortDir === "asc" ? " ▲" : " ▼") : ""}
+            </a>
+          </th>
+          <th class="px-4 py-3 text-center text-sm font-medium">
+            <a href={getSortUrl("wins")} class="hover:underline cursor-pointer">
+              Wins{sortBy === "wins" ? (sortDir === "asc" ? " ▲" : " ▼") : ""}
+            </a>
+          </th>
+          <th class="px-4 py-3 text-center text-sm font-medium">
+            <a href={getSortUrl("losses")} class="hover:underline cursor-pointer">
+              Losses{sortBy === "losses" ? (sortDir === "asc" ? " ▲" : " ▼") : ""}
+            </a>
+          </th>
+          <th class="px-4 py-3 text-center text-sm font-medium">
+            <a href={getSortUrl("winrate")} class="hover:underline cursor-pointer">
+              Winrate{sortBy === "winrate" ? (sortDir === "asc" ? " ▲" : " ▼") : ""}
+            </a>
+          </th>
           <th class="px-4 py-3 text-left text-sm font-medium">Performance</th>
           <th class="px-4 py-3 text-left text-sm font-medium">Last Game</th>
         </tr>
       </thead>
       <tbody class="divide-y">
         {
-          players.map((player) => (
+          sortedPlayers.map((player) => (
             <tr class="group hover:bg-gray-800 transition-colors">
               {/* Rank */}
               <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold">
@@ -102,7 +165,7 @@ const { players = [] }: { players?: PlayerStats[] } = Astro.props;
 
   <!-- Vista tipo cards para mobile -->
   <div class="flex flex-col gap-6 md:hidden">
-    {players.map((player) => (
+    {sortedPlayers.map((player) => (
       <div class="bg-white dark:bg-neutral-800 rounded-xl shadow-lg border border-neutral-200 dark:border-neutral-700 p-4 flex flex-col gap-2">
         <div class="flex items-center justify-between">
           <span class="text-xs font-semibold text-neutral-500 dark:text-neutral-400">Rank #{player.rank}</span>

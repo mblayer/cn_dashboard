@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 
 const getTargetDate = () => {
   const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const target = new Date(now);
-  target.setDate(now.getDate() + 34);
-  return target;
+  const year =
+    now.getMonth() > 6 || (now.getMonth() === 6 && now.getDate() > 15)
+      ? now.getFullYear() + 1
+      : now.getFullYear();
+  return new Date(year, 6, 15, 0, 0, 0, 0);
 };
 
 function getTimeLeft(targetDate) {
@@ -31,7 +32,10 @@ export default function JuanpiqPage() {
   }, [targetDate]);
 
   return (
-    <div className="h-full flex flex-col items-center justify-center bg-neutral-900 text-white overflow-hidden" style={{ minHeight: "calc(100vh - 180px)" }}>
+    <div
+      className="h-full flex flex-col items-center justify-center bg-neutral-900 text-white overflow-hidden"
+      style={{ minHeight: "calc(100vh - 180px)" }}
+    >
       <h1 className="text-5xl font-extrabold mb-10 text-center text-yellow-400 drop-shadow-lg">
         vuelve juampiq
       </h1>
@@ -56,6 +60,7 @@ export default function JuanpiqPage() {
           <div className="text-base font-normal">seg</div>
         </div>
       </div>
+      <p className="mt-8 text-neutral-400">Cuenta regresiva al 15 de julio</p>
     </div>
   );
 }

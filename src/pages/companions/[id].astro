@@ -1,0 +1,110 @@
+---
+// filepath: src/pages/companions/[id].astro
+import Layout from "../../layouts/Layout.astro";
+export const prerender = false;
+
+const API_URL = "https://apibot.server211.ovh/matches";
+const PLAYERS_API_URL = "https://apibot.server211.ovh/players";
+
+const { id } = Astro.params;
+
+// Obtener datos de la API
+let matches = [];
+let player = null;
+try {
+  const [matchesRes, playerRes] = await Promise.all([
+    fetch(API_URL),
+    fetch(`${PLAYERS_API_URL}/${id}`)
+  ]);
+  matches = matchesRes.ok ? await matchesRes.json() : [];
+  player = playerRes.ok ? await playerRes.json() : null;
+} catch (err) {
+  console.error("Error conectando con la API:", err);
+}
+
+// Filtrar partidas donde el jugador participó (en team1 o team2)
+const playerMatches = matches.filter(
+  (m) =>
+    m.team1.some((p) => p.id === id || p.userId === id) ||
+    m.team2.some((p) => p.id === id || p.userId === id)
+);
+
+// Map para contar victorias y derrotas por compañero
+const companions = {};
+
+playerMatches.forEach((match) => {
+  // Determinar en qué equipo está el jugador
+  let myTeam, myTeamCivs, won;
+  if (match.team1.some((p) => p.id === id || p.userId === id)) {
+    myTeam = match.team1;
+    myTeamCivs = match.team1_civs;
+    won = match.winner === 1;
+  } else {
+    myTeam = match.team2;
+    myTeamCivs = match.team2_civs;
+    won = match.winner === 2;
+  }
+  // Para cada compañero (excluyendo al propio jugador)
+  myTeam.forEach((p) => {
+    const compId = p.id || p.userId;
+    if (compId === id) return;
+    if (!companions[compId]) {
+      companions[compId] = {
+        name: p.name || p.displayName || "Desconocido",
+        wins: 0,
+        losses: 0,
+      };
+    }
+    if (won) companions[compId].wins++;
+    else companions[compId].losses++;
+  });
+});
+
+// Top 3 mejores compañeros (más victorias juntos)
+const bestCompanions = Object.entries(companions)
+  .map(([compId, data]) => ({ id: compId, ...data }))
+  .sort((a, b) => b.wins - a.wins)
+  .slice(0, 3);
+
+// Top 3 peores compañeros (más derrotas juntos)
+const worstCompanions = Object.entries(companions)
+  .map(([compId, data]) => ({ id: compId, ...data }))
+  .sort((a, b) => b.losses - a.losses)
+  .slice(0, 3);
+---
+
+<Layout>
+  <div class="max-w-2xl mx-auto p-6 space-y-8">
+    <h1 class="text-2xl font-bold mb-6">
+      Compañeros de equipo de {player?.displayName ?? player?.playerName ?? "Jugador"}
+    </h1>
+    <div class="mb-8">
+      <h2 class="text-lg font-semibold mb-2 text-green-600">Mejores compañeros (más victorias juntos)</h2>
+      {bestCompanions.length === 0 && <div class="text-neutral-500">No hay datos suficientes.</div>}
+      <ul class="space-y-2">
+        {bestCompanions.map((comp) => (
+          <li class="flex justify-between items-center bg-green-100 dark:bg-green-900 rounded px-4 py-2">
+            <span>
+              <a href={`/players/${comp.id}`} class="font-semibold text-green-700 dark:text-green-300 hover:underline">{comp.name}</a>
+            </span>
+            <span class="text-sm text-green-800 dark:text-green-200">{comp.wins} victorias juntos</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+    <div>
+      <h2 class="text-lg font-semibold mb-2 text-red-600">Peores compañeros (más derrotas juntos)</h2>
+      {worstCompanions.length === 0 && <div class="text-neutral-500">No hay datos suficientes.</div>}
+      <ul class="space-y-2">
+        {worstCompanions.map((comp) => (
+          <li class="flex justify-between items-center bg-red-100 dark:bg-red-900 rounded px-4 py-2">
+            <span>
+              <a href={`/players/${comp.id}`} class="font-semibold text-red-700 dark:text-red-300 hover:underline">{comp.name}</a>
+            </span>
+            <span class="text-sm text-red-800 dark:text-red-200">{comp.losses} derrotas juntos</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</Layout>
