@@ -58,6 +58,9 @@ const MapBarChart = ({
             dataKey="map"
             axisLine={{ stroke: '#333' }}
             tick={{ fill: '#666', className: 'dark:fill-neutral-400' }}
+            angle={-45}
+            textAnchor="end"
+            height={70}
           />
           <YAxis
             ticks={ticks}
@@ -70,10 +73,7 @@ const MapBarChart = ({
             contentStyle={{ backgroundColor: '#262626', borderColor: '#ccc' }}
             wrapperStyle={{ outline: 'none' }}
           />
-          <Legend
-            wrapperStyle={{ color: '#666' }}
-            payload={[{ value: 'Partidas', type: 'rect', color: barColor }]}
-          />
+
           <Bar dataKey="count" name="Partidas" fill={barColor} />
         </BarChart>
       </ResponsiveContainer>
